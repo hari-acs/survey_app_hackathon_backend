@@ -9,6 +9,10 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from dotenv import load_dotenv
+
+load_dotenv() 
 
 app = FastAPI()
 # CORS middleware
@@ -82,7 +86,7 @@ async def generate_report(user_data: dict):
      # ... (your existing code)
 
     # Send email with the generated PDF attachment
-    sender_email = "developer@agilecyber.com"  # Replace with your email
+    sender_email = os.getenv('SMTP_USER') # Replace with your email
     receiver_email = user_data['mail']  # Replace with the recipient's email
     subject = "Report PDF"
     body = "Please find the attached report."
@@ -108,7 +112,7 @@ async def generate_report(user_data: dict):
                         right_on=['pair_id', 'response_1', 'response_2'])
 
     # Extract English Text from the merged DataFrame
-    english_texts = merged_df['English Text'].tolist()
+    english_texts = merged_df[f'Text {user_data["language_key"]}'].tolist()
 
     # Create a PDF file
     pdf_file_path = 'output_report.pdf'
@@ -125,13 +129,13 @@ async def generate_report(user_data: dict):
         msg.attach(part)
 
     # Set up the SMTP server
-    smtp_server = "smtp.gmail.com"  # Replace with your SMTP server
-    smtp_port = 587  # Replace with the SMTP server port
+    smtp_server = os.getenv('SMTP_HOST')  # Replace with your SMTP server
+    smtp_port = os.getenv('SMTP_PORT')   # Replace with the SMTP server port
 
     # Log in to the SMTP server
     with smtplib.SMTP(smtp_server, smtp_port) as server:
         server.starttls()
-        server.login("developer@agilecyber.com", "sleiemskccrmtmdc")  # Replace with your email password
+        server.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD'))  # Replace with your email password
 
         # Send the email
         server.sendmail(sender_email, receiver_email, msg.as_string())
